@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output = "../../server/node_modules/db"
+  output = "../../server/node_modules/.prisma/client"
 }
 
 datasource db {
@@ -20,7 +20,7 @@ model Etel {
   id Int @id @default(autoincrement())
   name String @unique
   
-  allergenek AllergenOnEtel[]
+  allergenek AllergenOnEtel[] 
   menuk EtelOnMenu[]
 }
 
@@ -28,7 +28,7 @@ model Allergen{
   id Int @id @default(autoincrement())
   name String @unique 
 
-  etelek AllergenOnEtel[]
+  etelek AllergenOnEtel[] 
 }
 
 model Menu{
