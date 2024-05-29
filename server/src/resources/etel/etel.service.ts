@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { CreateEtel, UpdateAllergenOnEtel, UpdateEtel } from 'src/dto/etel.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UtilService } from 'src/util/util.service';
 
 @Injectable()
 export class EtelService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly util: UtilService,
+  ) {}
 
   create(data: CreateEtel) {
     const { name, allergenek } = data;
@@ -17,11 +21,6 @@ export class EtelService {
           },
         },
       },
-    });
-  }
-
-  async list() {
-    const etelek = await this.prisma.etel.findMany({
       include: {
         allergenek: {
           include: {
@@ -30,10 +29,21 @@ export class EtelService {
         },
       },
     });
-    return etelek.map((etel) => ({
-      ...etel,
-      allergenek: etel.allergenek.map((a) => ({ ...a.allergen })),
-    }));
+  }
+
+  async list(q?: string) {
+    return this.prisma.etel.findMany({
+      where: {
+        name: { contains: q },
+      },
+      include: {
+        allergenek: {
+          include: {
+            allergen: true,
+          },
+        },
+      },
+    });
   }
 
   async find(id: number) {
@@ -48,10 +58,7 @@ export class EtelService {
       },
     });
 
-    return {
-      ...etel,
-      allergenek: etel.allergenek.map((a) => ({ ...a.allergen })),
-    };
+    return etel;
   }
 
   async update({ id, data }: { id: number; data: UpdateEtel }) {
@@ -64,50 +71,37 @@ export class EtelService {
 
     if (data.allergenek && data.allergenek.length != 0) {
       const { allergenek } = data;
-      const { ADD, REMOVE } = allergenek.reduce(
-        (accumulator, currentObject) => {
-          const keyValue = currentObject['action'];
-
-          if (!accumulator[keyValue]) {
-            accumulator[keyValue] = [];
-          }
-
-          accumulator[keyValue].push(currentObject);
-
-          return accumulator;
-        },
-        {},
-      ) as { ADD: UpdateAllergenOnEtel[]; REMOVE: UpdateAllergenOnEtel[] };
+      const { ADD, REMOVE } = this.util.groupBy(allergenek, 'action');
       if (ADD && ADD.length > 0) {
-        await this.prisma.etel.update({
-          where: { id },
-          data: {
-            allergenek: {
-              createMany: {
-                data: ADD.map((d) => ({ allergenId: d.id })),
-              },
-            },
-          },
-        });
+        await this.addAllergen(ADD, id);
       }
       if (REMOVE && REMOVE.length > 0) {
-        await this.prisma.allergenOnEtel.deleteMany({
-          where: { allergenId: { in: REMOVE.map((d) => d.id) }, etelId: id },
-        });
+        await this.deleteAllergen(REMOVE, id);
       }
     }
 
-    const etel = await this.prisma.etel.findUnique({
-      where: { id },
-      include: { allergenek: { include: { allergen: true } } },
-    });
-    return {
-      ...etel,
-      allergenek: etel.allergenek.map((a) => ({ ...a.allergen })),
-    };
+    return this.find(id);
   }
 
   delete(id: number) {
     return this.prisma.etel.delete({ where: { id } });
+  }
+
+  private addAllergen(ADD: UpdateAllergenOnEtel[], id: number) {
+    return this.prisma.etel.update({
+      where: { id },
+      data: {
+        allergenek: {
+          createMany: {
+            data: ADD.map((d) => ({ allergenId: d.id })),
+          },
+        },
+      },
+    });
+  }
+  private deleteAllergen(REMOVE: UpdateAllergenOnEtel[], id: number) {
+    return this.prisma.allergenOnEtel.deleteMany({
+      where: { allergenId: { in: REMOVE.map((d) => d.id) }, etelId: id },
+    });
   }
 }

@@ -39,10 +39,10 @@ model Menu{
 }
 
 model EtelOnMenu{
-  etel Etel @relation(fields: [etelId], references: [id])
+  etel Etel @relation(fields: [etelId], references: [id], onDelete: Cascade)
   etelId Int
 
-  meunk Menu @relation(fields: [menuId], references: [id])
+  menuk Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)
   menuId Int
 
   @@id([etelId, menuId])
@@ -50,10 +50,10 @@ model EtelOnMenu{
 }
 
 model AllergenOnEtel{
-  etel Etel @relation(fields: [etelId], references: [id])
+  etel Etel @relation(fields: [etelId], references: [id], onDelete: Cascade)
   etelId Int
 
-  allergen Allergen @relation(fields: [allergenId], references: [id])
+  allergen Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
   allergenId Int
 
   @@id([etelId, allergenId])
