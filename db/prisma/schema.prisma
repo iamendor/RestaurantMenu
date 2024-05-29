@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output = "../../server/node_modules/.prisma/client"
 }
 
 datasource db {
@@ -19,7 +20,7 @@ model Etel {
   id Int @id @default(autoincrement())
   name String @unique
   
-  allergenek AllergenOnEtel[]
+  allergenek AllergenOnEtel[] 
   menuk EtelOnMenu[]
 }
 
@@ -27,7 +28,7 @@ model Allergen{
   id Int @id @default(autoincrement())
   name String @unique 
 
-  etelek AllergenOnEtel[]
+  etelek AllergenOnEtel[] 
 }
 
 model Menu{
@@ -38,10 +39,10 @@ model Menu{
 }
 
 model EtelOnMenu{
-  etel Etel @relation(fields: [etelId], references: [id])
+  etel Etel @relation(fields: [etelId], references: [id], onDelete: Cascade)
   etelId Int
 
-  meunk Menu @relation(fields: [menuId], references: [id])
+  menuk Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)
   menuId Int
 
   @@id([etelId, menuId])
@@ -49,10 +50,10 @@ model EtelOnMenu{
 }
 
 model AllergenOnEtel{
-  etel Etel @relation(fields: [etelId], references: [id])
+  etel Etel @relation(fields: [etelId], references: [id], onDelete: Cascade)
   etelId Int
 
-  allergen Allergen @relation(fields: [allergenId], references: [id])
+  allergen Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
   allergenId Int
 
   @@id([etelId, allergenId])
